@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function StationaryCatlog() {
+  const navigate = useNavigate();
+
   const stationaryCategories = [
     { id: 1, name: "Books", image: "https://freepngimg.com/thumb/book/6-books-png-image-with-transparency-background.png", color: "bg-blue-100" },
     { id: 2, name: "Pens", image: "✒️", color: "bg-red-100" },
@@ -12,9 +15,10 @@ function StationaryCatlog() {
     { id: 8, name: "Calculators", image: "🧮", color: "bg-teal-100" },
   ];
 
-  const handleCategoryClick = (name) => {
-    alert(`Opening ${name} category`);
-  };
+  const handleCategoryClick = (categoryName) => {
+  navigate(`/products?categoryType=${categoryName}`);
+};
+
 
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-6">
