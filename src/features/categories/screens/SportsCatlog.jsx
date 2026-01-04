@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function SportsCatlog() {
+  const navigate = useNavigate();
+
   const sportsCategories = [
     { id: 1, name: "Cricket", image: "https://png.pngtree.com/png-clipart/20240920/original/pngtree-full-cricket-kit-on-transparent-png-image_16048362.png", color: "bg-blue-200" },
     { id: 2, name: "Football", image: "⚽", color: "bg-green-200" },
@@ -12,9 +15,9 @@ function SportsCatlog() {
     { id: 8, name: "Running", image: "🏃", color: "bg-pink-200" },
   ];
 
-  const handleCategoryClick = (name) => {
-    alert(`Opening ${name} category`);
-  };
+  const handleCategoryClick = (categoryName) => {
+  navigate(`/products?categoryType=${categoryName}`);
+};
 
   return (
     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-6">

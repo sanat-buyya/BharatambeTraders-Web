@@ -27,9 +27,11 @@ const MainLayout = () => {
         <main className="flex-1 overflow-auto p-4">
           <Outlet />
         </main>
+
+        {/* Bottom Navigation - Mobile only */}
+      <div className="mt-12 md:hidden"><BottomNav /></div>
       </div>
-      {/* Bottom Navigation - Mobile only */}
-      <BottomNav />
+      
     </div>
   );
 };
