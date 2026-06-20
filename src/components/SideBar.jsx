@@ -1,13 +1,12 @@
 import { NavLink } from "react-router-dom";
 import {
   FaThLarge,
-  FaCube,
   FaChevronLeft,
   FaChevronRight,
   FaTimes,
-  FaHome,
+  FaCalculator,
+  FaHistory,
 } from "react-icons/fa";
-import { IoStorefront } from "react-icons/io5";
 import { BsBoxSeamFill } from "react-icons/bs";
 
 const SideBar = ({
@@ -19,16 +18,17 @@ const SideBar = ({
 
   // Desktop sidebar items
   const desktopNavItems = [
-    { name: "Home", path: "/home", icon: FaHome },
-    { name: "Categories", path: "/allCategories", icon: FaThLarge },
-    { name: "Products", path: "/products", icon: BsBoxSeamFill },
-    { name: "About Store", path: "/aboutStore", icon: IoStorefront },
+    { name: "Dashboard", path: "/home", icon: FaThLarge },
+    { name: "POS / New Bill", path: "/pos", icon: FaCalculator },
+    { name: "Invoices History", path: "/invoices", icon: FaHistory },
+    { name: "Inventory", path: "/inventory", icon: BsBoxSeamFill },
   ];
 
   // Mobile sidebar items (ONLY Profile)
   const mobileNavItems = [
     // { name: "Profile", path: "/profile", icon: FaUser },
   ];
+
 
   const getCurrentYear = () => {
     return new Date().getFullYear();

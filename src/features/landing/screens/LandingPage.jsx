@@ -1,218 +1,157 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FaPaintBrush, FaBook, FaPenNib, FaBriefcase } from "react-icons/fa";
-import newArrival from "../../../assets/newArrival.webp";
-import bestSeller from "../../../assets/bestSellers.webp";
-import stationaryItems from "../../../assets/stationaryItems.png";
-import sportsItems from "../../../assets/sportsItems.png";
+import { useSelector } from "react-redux";
+import { FaCalculator, FaChartBar, FaBoxes, FaHistory } from "react-icons/fa";
+import logo from "../../../assets/BTLogo.png";
 
 function LandingPage() {
   const navigate = useNavigate();
+  const products = useSelector((state) => state.inventory.products);
+  const invoices = useSelector((state) => state.billing.invoices);
+
+  // Quick statistics
+  const totalProducts = products.length;
+  const totalSalesCount = invoices.length;
+  const totalRevenue = invoices.reduce((acc, curr) => curr.status === "Paid" ? acc + curr.total : acc, 0);
 
   return (
-    <div className="w-full overflow-x-hidden">
-      {/* ================= HERO SECTION ================= */}
-      <section
-        className="min-h-screen bg-cover bg-center relative flex items-center justify-center"
-        style={{
-          backgroundImage:
-            "url(https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1600)",
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white">
+      
+      {/* Background Graphic Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none opacity-40"></div>
 
-        <div className="relative z-10 text-center max-w-3xl px-6">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Everything a Creator Needs — In One Place
-          </h1>
-          <p className="text-lg md:text-xl text-gray-200 mb-8">
-            Discover premium stationery, art supplies, and sports essentials
-            trusted by creators across India.
-          </p>
-          <button
-            onClick={() => navigate("/home")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition"
-          >
-            Start Exploring
-          </button>
-        </div>
-      </section>
-
-      <section className="container mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-          New Arrivals & Best Sellers
-        </h2>
-
-        <div className="flex flex-col md:flex-row gap-6 justify-between">
-          {/* New Arrivals */}
-          <div className="relative w-full md:w-1/2 group">
-            <img
-              src={newArrival}
-              alt="New Arrivals"
-              loading="lazy"
-              className="rounded-xl shadow-lg w-full h-90 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <span className="text-white text-xl font-semibold">
-                New Arrivals
-              </span>
-            </div>
+      {/* Header */}
+      <header className="relative z-10 max-w-7xl mx-auto w-full px-6 py-6 flex items-center justify-between border-b border-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center p-1">
+            <img src={logo} alt="Logo" className="w-8 h-8 rounded-lg" />
           </div>
-
-          {/* Best Sellers */}
-          <div className="relative w-full md:w-1/2 group">
-            <img
-              src={bestSeller}
-              alt="Best Sellers"
-              loading="lazy"
-              className="rounded-xl shadow-lg w-full h-90 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <span className="text-white text-xl font-semibold">
-                Best Sellers
-              </span>
-            </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-wider bg-gradient-to-r from-orange-400 to-amber-200 bg-clip-text text-transparent">
+              BHARATAMBE TRADERS
+            </h1>
+            <p className="text-[10px] text-slate-500 tracking-widest uppercase">POS & Billing System</p>
           </div>
         </div>
-      </section>
-
-      {/* ================= VISUAL SHOWCASE ================= */}
-      <section className="container mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Explore Our World of Creativity
-        </h2>
-
-        <div className="flex flex-col md:flex-row gap-6 justify-between">
-          {/* Stationery Items */}
-          <div className="relative w-full md:w-1/2 group">
-            <img
-              src={stationaryItems}
-              alt="Stationery Items"
-              loading="lazy"
-              className="rounded-xl shadow-lg w-full h-64 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <span className="text-white text-xl font-semibold">
-                Stationery Items
-              </span>
-            </div>
-          </div>
-
-          {/* Sports Items */}
-          <div className="relative w-full md:w-1/2 group">
-            <img
-              src={sportsItems}
-              alt="Sports Items"
-              loading="lazy"
-              className="rounded-xl shadow-lg w-full h-64 object-cover"
-            />
-            <div className="absolute inset-0 bg-black/30 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <span className="text-white text-xl font-semibold">
-                Sports Items
-              </span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs text-slate-400 font-medium">Terminal #1 Active</span>
         </div>
-      </section>
+      </header>
 
-      {/* ================= OUR PROMISE ================= */}
-      <section className="bg-gray-100 py-16">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Our Promise to Every Creator
+      {/* Main Hero & Portals */}
+      <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-6 py-12 flex flex-col items-center justify-center">
+        
+        {/* Intro */}
+        <div className="text-center max-w-2xl mb-12">
+          <span className="px-3 py-1 text-xs font-semibold tracking-wider text-orange-400 bg-orange-500/10 border border-orange-500/20 rounded-full uppercase">
+            Internal Business Portal
+          </span>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-white mt-4 tracking-tight leading-tight">
+            Store Billing &amp; <br />
+            <span className="bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-300 bg-clip-text text-transparent">
+              Inventory Management
+            </span>
           </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="bg-white p-8 rounded-xl shadow">
-              <h3 className="text-xl font-semibold mb-3">
-                🇮🇳 India’s Largest Creative Store
-              </h3>
-              <p className="text-gray-600">
-                Over 11,000+ curated products to fuel imagination and
-                creativity.
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-xl shadow">
-              <h3 className="text-xl font-semibold mb-3">
-                🎨 Handpicked for Quality
-              </h3>
-              <p className="text-gray-600">
-                Every product is selected to inspire and perform consistently.
-              </p>
-            </div>
-
-            <div className="bg-white p-8 rounded-xl shadow">
-              <h3 className="text-xl font-semibold mb-3">
-                ❤️ Loved by 1L+ Happy Creators
-              </h3>
-              <p className="text-gray-600">
-                Trusted daily by artists, students, and professionals.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= WHO IS THIS FOR ================= */}
-      <section className="container mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Built for Everyone Who Creates
-        </h2>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <FaPaintBrush className="text-4xl mx-auto mb-3 text-blue-600" />
-            <p className="font-medium">Artists & Illustrators</p>
-          </div>
-          <div>
-            <FaPenNib className="text-4xl mx-auto mb-3 text-blue-600" />
-            <p className="font-medium">Writers & Journal Lovers</p>
-          </div>
-          <div>
-            <FaBook className="text-4xl mx-auto mb-3 text-blue-600" />
-            <p className="font-medium">Students & Educators</p>
-          </div>
-          <div>
-            <FaBriefcase className="text-4xl mx-auto mb-3 text-blue-600" />
-            <p className="font-medium">Professionals</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= FINAL CTA ================= */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
-        <div className="text-center px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Create Something Amazing?
-          </h2>
-          <p className="text-white/90 mb-8">
-            Join thousands of creators discovering quality tools every day.
+          <p className="text-slate-400 mt-4 text-base md:text-lg">
+            A comprehensive, high-speed terminal designed for managing sales, generating tax invoices, and tracking real-time stock levels.
           </p>
-          <button
-            onClick={() => navigate("/home")}
-            className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition"
+        </div>
+
+        {/* Portals Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mb-12">
+          
+          {/* Card 1: POS */}
+          <div 
+            onClick={() => navigate("/pos")}
+            className="group relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-orange-500/30 hover:bg-slate-900/80 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-orange-500/5"
           >
-            Go to Home Page
-          </button>
-        </div>
-      </section>
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300"></div>
+            <div className="h-12 w-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 mb-6 group-hover:scale-110 transition-transform duration-300">
+              <FaCalculator className="text-2xl" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-400 transition-colors">
+              POS Terminal
+            </h3>
+            <p className="text-slate-400 text-sm mb-4">
+              Launch the billing screen, add products, apply discounts, select payment options, and instantly checkout and print invoices.
+            </p>
+            <span className="inline-flex items-center gap-1 text-xs text-orange-500 font-semibold group-hover:underline">
+              Launch Billing &rarr;
+            </span>
+          </div>
 
-      {/* ================= FOOTER ================= */}
-      <footer className="bg-gray-900 text-gray-400 py-10">
-        <div className="container mx-auto px-6 text-center">
-          <h3 className="text-white text-2xl font-bold mb-3">
-            Bharatambe Traders
-          </h3>
-          <p className="mb-4">
-            Your one-stop store for quality stationery & sports essentials.
-          </p>
-          <p className="text-sm">
-            © {new Date().getFullYear()} Bharatambe Traders. All rights
-            reserved.
-          </p>
+          {/* Card 2: Dashboard */}
+          <div 
+            onClick={() => navigate("/home")}
+            className="group relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-blue-500/30 hover:bg-slate-900/80 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-blue-500/5"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300"></div>
+            <div className="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-300">
+              <FaChartBar className="text-2xl" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+              Sales Reports
+            </h3>
+            <p className="text-slate-400 text-sm mb-4">
+              View comprehensive business intelligence reports, aggregate statistics, revenue curves, and payment method analytics.
+            </p>
+            <span className="inline-flex items-center gap-1 text-xs text-blue-400 font-semibold group-hover:underline">
+              Open Dashboard &rarr;
+            </span>
+          </div>
+
+          {/* Card 3: Inventory */}
+          <div 
+            onClick={() => navigate("/inventory")}
+            className="group relative rounded-2xl border border-slate-800 bg-slate-900/50 p-6 hover:border-emerald-500/30 hover:bg-slate-900/80 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-emerald-500/5"
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300"></div>
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-300">
+              <FaBoxes className="text-2xl" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+              Manage Inventory
+            </h3>
+            <p className="text-slate-400 text-sm mb-4">
+              Add new catalog items, track low-stock status alerts, adjust prices, edit tax (GST) mappings, and update quantities.
+            </p>
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold group-hover:underline">
+              Manage Stock &rarr;
+            </span>
+          </div>
+
         </div>
+
+        {/* Horizontal Mini-Metrics bar */}
+        <div className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl border border-slate-900 bg-slate-905/30 backdrop-blur-sm text-center">
+          <div>
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Total Revenue</p>
+            <p className="text-2xl font-bold text-slate-100 mt-1">₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
+          <div className="border-l border-slate-900">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Bills Issued</p>
+            <p className="text-2xl font-bold text-slate-100 mt-1">{totalSalesCount}</p>
+          </div>
+          <div className="border-l border-slate-900">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Products Mapped</p>
+            <p className="text-2xl font-bold text-slate-100 mt-1">{totalProducts}</p>
+          </div>
+          <div className="border-l border-slate-900">
+            <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Low Stock items</p>
+            <p className="text-2xl font-bold text-red-400 mt-1">
+              {products.filter(p => p.stock <= 5).length}
+            </p>
+          </div>
+        </div>
+
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 max-w-7xl mx-auto w-full px-6 py-6 text-center text-xs text-slate-600 border-t border-slate-900 mt-auto">
+        &copy; {new Date().getFullYear()} Bharatambe Traders. POS System Dashboard. Designed for optimal screen resolutions.
       </footer>
+
     </div>
   );
 }

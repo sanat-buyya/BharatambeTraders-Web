@@ -3,9 +3,10 @@ import publicRoutes from "./PublicRoutes";
 
 import MainLayout from "../layouts/MainLayout";
 import DashboardPage from "../features/dashboard/screens/Dashboard";
-import AllCategoryPage from "../features/categories/screens/CategoryList";
-import NearByStoresPage from "../features/nearByStore/screens/nearByStores";
-import ProductsPage from "../features/Products/screens/Products";
+import POSPage from "../features/billing/screens/POS";
+import InvoiceListPage from "../features/billing/screens/InvoiceList";
+import ProductListPage from "../features/inventory/screens/ProductList";
+
 const AppRoutes = () => {
   return (
     <BrowserRouter>
@@ -19,9 +20,9 @@ const AppRoutes = () => {
         {/* Layout Routes */}
         <Route element={<MainLayout />}>
           <Route path="/home" element={<DashboardPage />} />
-          <Route path="/allCategories" element={<AllCategoryPage />} />
-          <Route path="/aboutStore" element={<NearByStoresPage />} />
-           <Route path="/products" element={<ProductsPage />} /> 
+          <Route path="/pos" element={<POSPage />} />
+          <Route path="/invoices" element={<InvoiceListPage />} />
+          <Route path="/inventory" element={<ProductListPage />} />
         </Route>
 
         {/* Fallback */}
@@ -33,3 +34,4 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+

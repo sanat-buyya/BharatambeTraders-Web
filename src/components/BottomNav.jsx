@@ -1,15 +1,15 @@
 import { NavLink } from "react-router-dom";
-import { FaThLarge, FaCube, FaHome } from "react-icons/fa";
-import { IoStorefront } from "react-icons/io5";
+import { FaThLarge, FaCalculator, FaHistory } from "react-icons/fa";
 import { BsBoxSeamFill } from "react-icons/bs";
 
 const BottomNav = () => {
   const navItems = [
-    { name: "Home", path: "/home", icon: FaHome },
-    { name: "Categories", path: "/allCategories", icon: FaThLarge },
-    { name: "Products", path: "/products", icon: BsBoxSeamFill},
-    { name: "Stores", path: "/aboutStore", icon: IoStorefront },
+    { name: "Dashboard", path: "/home", icon: FaThLarge },
+    { name: "POS", path: "/pos", icon: FaCalculator },
+    { name: "Invoices", path: "/invoices", icon: FaHistory },
+    { name: "Inventory", path: "/inventory", icon: BsBoxSeamFill },
   ];
+
 
   return (
     <nav className="
