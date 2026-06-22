@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { IoSearch } from "react-icons/io5";
-import { FaBoxes, FaPlus, FaTimes, FaEdit, FaTrashAlt, FaExclamationTriangle } from "react-icons/fa";
-import { addProduct, updateProduct, deleteProduct } from "../inventorySlice";
+import { FaBoxes, FaPlus, FaTimes, FaEdit, FaTrashAlt, FaExclamationTriangle, FaSpinner } from "react-icons/fa";
+import { fetchProducts, addProduct, updateProduct, deleteProduct } from "../inventorySlice";
 
 function ProductList() {
   const dispatch = useDispatch();
-  const products = useSelector((state) => state.inventory.products);
+  const { products, loading, error } = useSelector((state) => state.inventory);
 
   // Search & filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,6 +28,10 @@ function ProductList() {
     stock: "",
     image: ""
   });
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
 
   // Unique categories list for filters
   const categories = ["All", ...new Set(products.map((p) => p.category))];
@@ -58,7 +62,6 @@ function ProductList() {
     }
 
     const newProd = {
-      id: Date.now(),
       name: formData.name,
       sku: formData.sku,
       description: formData.description,
@@ -69,9 +72,14 @@ function ProductList() {
       image: formData.image
     };
 
-    dispatch(addProduct(newProd));
-    setShowAddModal(false);
-    resetForm();
+    dispatch(addProduct(newProd)).then((res) => {
+      if (!res.error) {
+        setShowAddModal(false);
+        resetForm();
+      } else {
+        alert(res.payload || "Failed to create product");
+      }
+    });
   };
 
   // Trigger Edit Modal
@@ -99,7 +107,7 @@ function ProductList() {
     }
 
     const updatedProd = {
-      ...currentProduct,
+      _id: currentProduct._id || currentProduct.id,
       name: formData.name,
       sku: formData.sku,
       description: formData.description,
@@ -110,15 +118,24 @@ function ProductList() {
       image: formData.image
     };
 
-    dispatch(updateProduct(updatedProd));
-    setShowEditModal(false);
-    resetForm();
+    dispatch(updateProduct(updatedProd)).then((res) => {
+      if (!res.error) {
+        setShowEditModal(false);
+        resetForm();
+      } else {
+        alert(res.payload || "Failed to update product");
+      }
+    });
   };
 
   // Handle Delete Product
   const handleDelete = (id, name) => {
     if (window.confirm(`Are you sure you want to delete ${name} from inventory?`)) {
-      dispatch(deleteProduct(id));
+      dispatch(deleteProduct(id)).then((res) => {
+        if (res.error) {
+          alert(res.payload || "Failed to delete product");
+        }
+      });
     }
   };
 
@@ -149,11 +166,17 @@ function ProductList() {
           </div>
           <button 
             onClick={() => { resetForm(); setShowAddModal(true); }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg transition-transform transform active:scale-95 text-xs"
           >
             <FaPlus /> Add New Product
           </button>
         </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-xs">
+            {error}
+          </div>
+        )}
 
         {/* Statistical KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -185,9 +208,9 @@ function ProductList() {
               placeholder="Search by product name, SKU or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500"
             />
-            <IoSearch className="absolute left-3.5 top-3 text-slate-500" size={16} />
+            <IoSearch className="absolute left-3.5 top-3.5 text-slate-500" size={16} />
           </div>
 
           <div className="flex items-center gap-2">
@@ -205,7 +228,13 @@ function ProductList() {
         </div>
 
         {/* Inventory list Table */}
-        <div className="bg-slate-900/30 border border-slate-900 rounded-xl overflow-hidden shadow-lg">
+        <div className="bg-slate-900/30 border border-slate-900 rounded-xl overflow-hidden shadow-lg relative">
+          {loading && (
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-10 rounded-xl">
+              <FaSpinner className="animate-spin text-orange-500 text-2xl" />
+            </div>
+          )}
+          
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs md:text-sm">
               <thead>
@@ -223,9 +252,10 @@ function ProductList() {
                 {filteredProducts.map((prod) => {
                   const isOutOfStock = prod.stock === 0;
                   const isLowStock = prod.stock > 0 && prod.stock <= 5;
+                  const prodId = prod._id || prod.id;
 
                   return (
-                    <tr key={prod.id} className="hover:bg-slate-900/20 transition-colors">
+                    <tr key={prodId} className="hover:bg-slate-900/20 transition-colors">
                       <td className="py-4 px-4 font-mono font-bold text-slate-400">{prod.sku}</td>
                       <td className="py-4 px-2">
                         <div className="flex items-center gap-3">
@@ -268,7 +298,7 @@ function ProductList() {
                             <FaEdit size={12} />
                           </button>
                           <button 
-                            onClick={() => handleDelete(prod.id, prod.name)}
+                            onClick={() => handleDelete(prodId, prod.name)}
                             className="p-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded border border-rose-500/20 transition"
                             title="Delete product"
                           >
@@ -280,7 +310,7 @@ function ProductList() {
                   );
                 })}
 
-                {filteredProducts.length === 0 && (
+                {filteredProducts.length === 0 && !loading && (
                   <tr>
                     <td colSpan="7" className="py-12 text-center text-slate-500 text-sm">No inventory items match active filter query.</td>
                   </tr>
@@ -315,7 +345,7 @@ function ProductList() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
                 <div className="space-y-1">
@@ -325,7 +355,7 @@ function ProductList() {
                     required
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -335,7 +365,7 @@ function ProductList() {
                 <textarea 
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500 h-16 resize-none"
+                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500 h-16 resize-none"
                 />
               </div>
 
@@ -345,7 +375,7 @@ function ProductList() {
                   <select 
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   >
                     <option value="Stationery">Stationery</option>
                     <option value="Sports">Sports</option>
@@ -358,7 +388,7 @@ function ProductList() {
                   <select 
                     value={formData.gstRate}
                     onChange={(e) => setFormData({ ...formData, gstRate: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   >
                     <option value="0">0% (Exempt)</option>
                     <option value="5">5% GST</option>
@@ -377,7 +407,7 @@ function ProductList() {
                     required
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
                 <div className="space-y-1">
@@ -387,7 +417,7 @@ function ProductList() {
                     required
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -399,7 +429,7 @@ function ProductList() {
                   placeholder="https://example.com/image.jpg"
                   value={formData.image}
                   onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                 />
               </div>
 
@@ -447,7 +477,7 @@ function ProductList() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
                 <div className="space-y-1">
@@ -457,7 +487,7 @@ function ProductList() {
                     required
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -467,7 +497,7 @@ function ProductList() {
                 <textarea 
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500 h-16 resize-none"
+                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500 h-16 resize-none"
                 />
               </div>
 
@@ -477,7 +507,7 @@ function ProductList() {
                   <select 
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   >
                     <option value="Stationery">Stationery</option>
                     <option value="Sports">Sports</option>
@@ -490,7 +520,7 @@ function ProductList() {
                   <select 
                     value={formData.gstRate}
                     onChange={(e) => setFormData({ ...formData, gstRate: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   >
                     <option value="0">0% (Exempt)</option>
                     <option value="5">5% GST</option>
@@ -509,7 +539,7 @@ function ProductList() {
                     required
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
                 <div className="space-y-1">
@@ -519,7 +549,7 @@ function ProductList() {
                     required
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                   />
                 </div>
               </div>
@@ -530,7 +560,7 @@ function ProductList() {
                   type="text" 
                   value={formData.image}
                   onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-slate-955 border border-slate-800 rounded-lg p-2.5 bg-slate-950 text-slate-100 focus:outline-none focus:border-orange-500"
                 />
               </div>
 

@@ -1,6 +1,6 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../../app/api/axiosInstance";
 import { 
   FaFileInvoiceDollar, 
   FaBoxes, 
@@ -8,45 +8,70 @@ import {
   FaShoppingCart, 
   FaExclamationTriangle, 
   FaPlus,
-  FaFileInvoice
+  FaFileInvoice,
+  FaSpinner
 } from "react-icons/fa";
 
 function Dashboard() {
   const navigate = useNavigate();
-  const products = useSelector((state) => state.inventory.products);
-  const invoices = useSelector((state) => state.billing.invoices);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
-  // Math Calculations
-  const activeInvoices = invoices.filter(inv => inv.status === "Paid");
-  const totalRevenue = activeInvoices.reduce((acc, curr) => acc + curr.total, 0);
-  const totalInvoicesCount = invoices.length;
-  const avgOrderValue = totalInvoicesCount > 0 ? totalRevenue / totalInvoicesCount : 0;
-  const itemsSold = activeInvoices.reduce((acc, curr) => {
-    return acc + curr.items.reduce((sum, item) => sum + item.qty, 0);
-  }, 0);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get("/dashboard/summary");
+        setData(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load dashboard metrics from server.");
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
 
-  // Low stock products alert (stock <= 5)
-  const lowStockProducts = products.filter(p => p.stock <= 5);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-400 gap-2">
+        <FaSpinner className="animate-spin text-orange-500 text-2xl" />
+        <span>Loading merchant console...</span>
+      </div>
+    );
+  }
 
-  // Revenue by payment method
-  const paymentMethods = invoices.reduce((acc, curr) => {
-    if (curr.status === "Paid") {
-      acc[curr.paymentMethod] = (acc[curr.paymentMethod] || 0) + curr.total;
-    }
-    return acc;
-  }, { Cash: 0, UPI: 0, Card: 0 });
+  if (error || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-rose-400 bg-slate-950 p-6">
+        <div className="border border-rose-500/20 bg-rose-500/10 p-6 rounded-2xl max-w-md text-center space-y-4">
+          <p>{error || "No data available."}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-rose-500 text-white rounded-xl text-xs font-bold"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Generate SVG Chart Data points (last 6 invoices in chronological order)
-  const chartInvoices = [...invoices].slice(0, 6).reverse();
-  const maxTotal = Math.max(...chartInvoices.map(inv => inv.total), 1000);
+  const { kpis, recentInvoices, lowStockProducts, paymentBreakdown, topSellingProducts } = data;
+
+  // Generate SVG Chart Data points (last 6 daily sales logs)
+  const chartSales = [...data.reports.dailySales].slice(0, 6).reverse();
+  const maxTotal = Math.max(...chartSales.map(day => day.sales), 1000);
   const svgWidth = 500;
   const svgHeight = 200;
   const padding = 30;
-  
-  const points = chartInvoices.map((inv, idx) => {
-    const x = padding + (idx * (svgWidth - padding * 2)) / (Math.max(chartInvoices.length - 1, 1));
-    const y = svgHeight - padding - (inv.total * (svgHeight - padding * 2)) / maxTotal;
-    return { x, y, label: inv.id.split("-").pop(), total: inv.total };
+
+  const points = chartSales.map((day, idx) => {
+    const x = padding + (idx * (svgWidth - padding * 2)) / (Math.max(chartSales.length - 1, 1));
+    const y = svgHeight - padding - (day.sales * (svgHeight - padding * 2)) / maxTotal;
+    return { x, y, label: day.date.slice(5), total: day.sales }; // MM-DD label
   });
 
   const svgLinePath = points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
@@ -78,12 +103,12 @@ function Dashboard() {
           {/* Card 1: Revenue */}
           <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group hover:border-slate-800 transition-colors">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Sales Revenue</span>
-              <h3 className="text-2xl md:text-3xl font-black text-white">
-                ₹{totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Gross Sales Revenue</span>
+              <h3 className="text-xl md:text-2xl font-black text-white">
+                ₹{kpis.totalSales.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
-              <p className="text-emerald-400 text-xs flex items-center gap-1 font-medium">
-                <FaArrowUp /> +14.2% <span className="text-slate-500">this week</span>
+              <p className="text-emerald-450 text-[10px] flex items-center gap-1 font-medium">
+                Today: <strong className="text-white">₹{kpis.todaySales.toFixed(2)}</strong>
               </p>
             </div>
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
@@ -91,24 +116,24 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Card 2: Invoice count */}
+          {/* Card 2: Invoices count */}
           <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group hover:border-slate-800 transition-colors">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Invoices Issued</span>
-              <h3 className="text-2xl md:text-3xl font-black text-white">{totalInvoicesCount}</h3>
-              <p className="text-slate-500 text-xs font-medium">Bills logged in system</p>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Invoices Issued</span>
+              <h3 className="text-xl md:text-2xl font-black text-white">{kpis.totalInvoices}</h3>
+              <p className="text-slate-550 text-[10px] font-medium">This month: {kpis.totalInvoices} bills</p>
             </div>
             <div className="p-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
               <FaFileInvoice className="text-2xl" />
             </div>
           </div>
 
-          {/* Card 3: Items Sold */}
+          {/* Card 3: Items catalogued */}
           <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group hover:border-slate-800 transition-colors">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Items Sold</span>
-              <h3 className="text-2xl md:text-3xl font-black text-white">{itemsSold}</h3>
-              <p className="text-slate-500 text-xs font-medium">Products disbursed</p>
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Catalog Items</span>
+              <h3 className="text-xl md:text-2xl font-black text-white">{kpis.inventoryCount} Products</h3>
+              <p className="text-slate-550 text-[10px] font-medium">Active list in database</p>
             </div>
             <div className="p-3 bg-orange-500/10 border border-orange-500/20 text-orange-500 rounded-xl">
               <FaShoppingCart className="text-2xl" />
@@ -118,13 +143,13 @@ function Dashboard() {
           {/* Card 4: Low stock count */}
           <div className="bg-slate-900/40 border border-slate-900 p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group hover:border-slate-800 transition-colors">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Stock Alerts</span>
-              <h3 className={`text-2xl md:text-3xl font-black ${lowStockProducts.length > 0 ? "text-rose-500 animate-pulse" : "text-white"}`}>
-                {lowStockProducts.length}
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Low Stock Alerts</span>
+              <h3 className={`text-xl md:text-2xl font-black ${kpis.lowStockCount > 0 ? "text-rose-500 animate-pulse" : "text-white"}`}>
+                {kpis.lowStockCount} Alerts
               </h3>
-              <p className="text-slate-500 text-xs font-medium">Items with &le; 5 units left</p>
+              <p className="text-slate-550 text-[10px] font-medium">Items with &le; 5 units left</p>
             </div>
-            <div className={`p-3 rounded-xl border ${lowStockProducts.length > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-slate-800 text-slate-400"}`}>
+            <div className={`p-3 rounded-xl border ${kpis.lowStockCount > 0 ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-slate-800 text-slate-400"}`}>
               <FaBoxes className="text-2xl" />
             </div>
           </div>
@@ -138,13 +163,13 @@ function Dashboard() {
           <div className="bg-slate-900/30 border border-slate-900 p-6 rounded-2xl lg:col-span-2 space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h4 className="text-lg font-bold text-white">Billing Revenue Trend</h4>
-                <p className="text-xs text-slate-500">Sales velocity over the last {chartInvoices.length} transactions</p>
+                <h4 className="text-lg font-bold text-white">Daily Sales Trend</h4>
+                <p className="text-xs text-slate-500">Sales velocity over the last active days</p>
               </div>
-              <span className="px-2.5 py-1 text-[10px] font-bold bg-slate-800 border border-slate-700 text-slate-300 rounded-md">Realtime</span>
+              <span className="px-2.5 py-1 text-[10px] font-bold bg-slate-800 border border-slate-700 text-slate-300 rounded-md">Live Stream</span>
             </div>
 
-            {chartInvoices.length > 1 ? (
+            {chartSales.length > 1 ? (
               <div className="w-full overflow-x-auto">
                 <div className="min-w-[450px] py-2">
                   <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto overflow-visible">
@@ -187,7 +212,7 @@ function Dashboard() {
               </div>
             ) : (
               <div className="h-48 flex items-center justify-center border border-dashed border-slate-800 rounded-xl">
-                <p className="text-slate-500 text-sm">Add more invoices to see sales analytics trend charts.</p>
+                <p className="text-slate-500 text-sm">Add more invoices to see daily sales trends.</p>
               </div>
             )}
           </div>
@@ -200,9 +225,9 @@ function Dashboard() {
             </div>
 
             <div className="space-y-4 flex-1 flex flex-col justify-center">
-              {Object.keys(paymentMethods).map((method) => {
-                const amount = paymentMethods[method];
-                const percentage = totalRevenue > 0 ? (amount / totalRevenue) * 100 : 0;
+              {Object.keys(paymentBreakdown).map((method) => {
+                const amount = paymentBreakdown[method];
+                const percentage = kpis.totalSales > 0 ? (amount / kpis.totalSales) * 100 : 0;
                 
                 let colorBar = "bg-orange-500";
                 let textClass = "text-orange-400";
@@ -225,14 +250,14 @@ function Dashboard() {
               })}
             </div>
 
-            <div className="pt-4 border-t border-slate-900/60 text-center">
-              <p className="text-xs text-slate-500">Average ticket size: <strong className="text-slate-300">₹{avgOrderValue.toFixed(2)}</strong></p>
+            <div className="pt-4 border-t border-slate-900/60 text-center text-xs">
+              <p className="text-slate-500">Monthly gross velocity: <strong className="text-slate-350">₹{kpis.monthlySales.toFixed(2)}</strong></p>
             </div>
           </div>
 
         </div>
 
-        {/* Bottom tables: Recent Sales & Low Stock warnings */}
+        {/* Bottom tables: Recent Sales & Top Products */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* Recent Sales table */}
@@ -261,9 +286,9 @@ function Dashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-900/40">
-                  {invoices.slice(0, 4).map((inv) => (
-                    <tr key={inv.id} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
-                      <td className="py-3 font-semibold text-slate-400">{inv.id}</td>
+                  {recentInvoices.map((inv) => (
+                    <tr key={inv._id} className="text-slate-305 hover:bg-slate-900/20 transition-colors">
+                      <td className="py-3 font-semibold text-slate-400">{inv.invoiceId}</td>
                       <td>
                         <div className="font-semibold text-slate-200">{inv.customerName}</div>
                         <div className="text-[10px] text-slate-500">{inv.customerPhone}</div>
@@ -280,7 +305,7 @@ function Dashboard() {
                       <td className="text-right font-bold text-white">₹{inv.total.toFixed(2)}</td>
                     </tr>
                   ))}
-                  {invoices.length === 0 && (
+                  {recentInvoices.length === 0 && (
                     <tr>
                       <td colSpan="4" className="py-8 text-center text-slate-500 text-sm">No transactions logged yet.</td>
                     </tr>
@@ -290,16 +315,16 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Low Stock Alerts & Fast Action */}
+          {/* Top Selling Products list */}
           <div className="bg-slate-900/30 border border-slate-900 p-6 rounded-2xl space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <h4 className="text-lg font-bold text-white">Low Stock Alerts</h4>
-                <p className="text-xs text-slate-500">Products that require restocking attention</p>
+                <h4 className="text-lg font-bold text-white">Top Selling Products</h4>
+                <p className="text-xs text-slate-500">Highest grossing items in inventory</p>
               </div>
               <button 
                 onClick={() => navigate("/inventory")} 
-                className="text-xs text-rose-500 hover:text-rose-400 font-semibold hover:underline"
+                className="text-xs text-orange-555 hover:text-orange-400 font-semibold hover:underline"
               >
                 Go to Inventory &rarr;
               </button>
@@ -309,39 +334,25 @@ function Dashboard() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-900 text-slate-500 font-bold text-xs uppercase tracking-wider">
-                    <th className="py-2.5">Product SKU</th>
+                    <th className="py-2.5">SKU</th>
                     <th>Product Name</th>
-                    <th>Stock Left</th>
-                    <th className="text-right">Action</th>
+                    <th className="text-center">Qty Sold</th>
+                    <th className="text-right">Revenue</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-900/40">
-                  {lowStockProducts.slice(0, 4).map((prod) => (
-                    <tr key={prod.id} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
+                  {topSellingProducts.map((prod, index) => (
+                    <tr key={index} className="text-slate-300 hover:bg-slate-900/20 transition-colors">
                       <td className="py-3 text-slate-400 font-mono">{prod.sku}</td>
                       <td className="font-semibold text-slate-200">{prod.name}</td>
-                      <td>
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold
-                          ${prod.stock === 0 ? "bg-rose-500/10 border border-rose-500/20 text-rose-500" : "bg-amber-500/10 border border-amber-500/20 text-amber-500"}
-                        `}>
-                          <FaExclamationTriangle className="text-[10px]" />
-                          {prod.stock === 0 ? "Out of Stock" : `${prod.stock} units`}
-                        </span>
-                      </td>
-                      <td className="text-right">
-                        <button 
-                          onClick={() => navigate("/inventory")}
-                          className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:text-white rounded-lg text-xs font-semibold"
-                        >
-                          Restock
-                        </button>
-                      </td>
+                      <td className="text-center font-bold text-orange-400">{prod.qty} units</td>
+                      <td className="text-right font-bold text-white">₹{prod.revenue.toFixed(2)}</td>
                     </tr>
                   ))}
-                  {lowStockProducts.length === 0 && (
+                  {topSellingProducts.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="py-8 text-center text-slate-500 text-sm">
-                        🎉 All catalog products have sufficient stock levels!
+                      <td colSpan="4" className="py-8 text-center text-slate-500 text-sm font-medium">
+                        No product statistics compiled yet.
                       </td>
                     </tr>
                   )}

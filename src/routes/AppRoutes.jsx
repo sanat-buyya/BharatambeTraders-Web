@@ -6,6 +6,9 @@ import DashboardPage from "../features/dashboard/screens/Dashboard";
 import POSPage from "../features/billing/screens/POS";
 import InvoiceListPage from "../features/billing/screens/InvoiceList";
 import ProductListPage from "../features/inventory/screens/ProductList";
+import ReportsPage from "../features/reports/screens/Reports";
+import SettingsPage from "../features/profile/screens/Settings";
+import ProtectedRoute from "./ProtectedRoute";
 
 const AppRoutes = () => {
   return (
@@ -17,12 +20,16 @@ const AppRoutes = () => {
           <Route key={index} path={path} element={element} />
         ))}
 
-        {/* Layout Routes */}
-        <Route element={<MainLayout />}>
-          <Route path="/home" element={<DashboardPage />} />
-          <Route path="/pos" element={<POSPage />} />
-          <Route path="/invoices" element={<InvoiceListPage />} />
-          <Route path="/inventory" element={<ProductListPage />} />
+        {/* Layout Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/home" element={<DashboardPage />} />
+            <Route path="/pos" element={<POSPage />} />
+            <Route path="/invoices" element={<InvoiceListPage />} />
+            <Route path="/inventory" element={<ProductListPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
         </Route>
 
         {/* Fallback */}
@@ -34,4 +41,3 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
-
