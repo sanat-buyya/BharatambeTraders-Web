@@ -29,6 +29,7 @@ export const checkout = createAsyncThunk(
         items: state.cart,
         discountPercent: state.discount,
         paymentMethod: state.paymentMethod,
+        ...checkoutData,
       };
 
       const response = await axiosInstance.post("/billing", payload);
@@ -51,6 +52,21 @@ export const refundInvoice = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to process refund"
+      );
+    }
+  }
+);
+
+export const convertQuotation = createAsyncThunk(
+  "billing/convertQuotation",
+  async (invoiceId, { rejectWithValue }) => {
+    try {
+      const id = invoiceId._id || invoiceId;
+      const response = await axiosInstance.put(`/billing/${id}/convert-quotation`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to convert quotation"
       );
     }
   }
@@ -188,6 +204,27 @@ const billingSlice = createSlice({
         }
       })
       .addCase(refundInvoice.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Convert Quotation
+      .addCase(convertQuotation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(convertQuotation.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.invoices.findIndex(
+          inv => (inv._id === action.payload._id || inv.id === action.payload.invoiceId)
+        );
+        if (index !== -1) {
+          state.invoices[index] = {
+            ...action.payload,
+            id: action.payload.invoiceId,
+          };
+        }
+      })
+      .addCase(convertQuotation.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

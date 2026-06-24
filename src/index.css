@@ -1,3 +1,218 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom Traditional Invoice Preview and Print Styles */
+.print-receipt {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1e293b;
+  font-size: 11px;
+  line-height: 1.5;
+  background-color: #fff;
+  border: 3px double #94a3b8;
+  border-top: 10px solid #6b8e23;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.logo-img {
+  max-height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.shop-header-banner {
+  background-color: #e2ebc8;
+  color: #0f172a;
+  padding: 4px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.shop-title-banner {
+  background-color: #6b8e23;
+  color: #ffffff;
+  padding: 10px;
+  text-align: center;
+}
+
+.shop-title-text {
+  font-size: 18px;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.shop-subtitle-text {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 2px 0 0 0;
+}
+
+.shop-address-banner {
+  background-color: #e2ebc8;
+  color: #0f172a;
+  padding: 8px 12px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 700;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.shop-tagline {
+  font-size: 7.5px;
+  font-weight: normal;
+  margin-top: 4px;
+  color: #374151;
+}
+
+.document-title-container {
+  padding: 12px 0;
+  text-align: center;
+}
+
+.document-title {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-decoration: underline;
+  color: #000;
+  letter-spacing: 1px;
+}
+
+.details-box {
+  background-color: #fff;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.details-label {
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.details-val {
+  color: #334155;
+  font-weight: 600;
+}
+
+.receipt-table-container {
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipt-table th {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 8.5px;
+  text-transform: uppercase;
+  padding: 6px 8px;
+  border-bottom: 1px solid #94a3b8;
+  border-right: 1px solid #94a3b8;
+}
+
+.receipt-table th:last-child {
+  border-right: none;
+}
+
+.receipt-table td {
+  padding: 6px 8px;
+  font-size: 9.5px;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #94a3b8;
+  color: #1e293b;
+}
+
+.receipt-table td:last-child {
+  border-right: none;
+}
+
+.receipt-table tr:last-child td {
+  border-bottom: none;
+}
+
+.inner-calc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.inner-calc-table td {
+  padding: 4px 8px !important;
+  border: none !important;
+  font-size: 9px !important;
+  color: #1e293b !important;
+}
+
+.inner-calc-table tr:not(:last-child) td {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.footer-sig-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 20px;
+  padding: 0 8px;
+}
+
+.footer-thankyou {
+  font-weight: 700;
+  font-style: italic;
+  font-size: 9.5px;
+  color: #0f172a;
+}
+
+.sig-block {
+  text-align: right;
+  width: 140px;
+}
+
+.sig-line {
+  border-bottom: 1px solid #94a3b8;
+  margin-bottom: 4px;
+}
+
+.sig-text {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+}
+

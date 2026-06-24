@@ -34,6 +34,11 @@ function POS() {
   const [discountType, setDiscountType] = useState("percent"); // "percent" | "fixed"
   const [discountValue, setDiscountValue] = useState(0);
 
+  // Quotation & PDF settings
+  const [isQuotation, setIsQuotation] = useState(false);
+  const [pageSize, setPageSize] = useState("auto");
+  const [orientation, setOrientation] = useState("portrait");
+
   // Load products on mount
   useEffect(() => {
     dispatch(fetchProducts());
@@ -107,7 +112,11 @@ function POS() {
       return;
     }
 
-    dispatch(checkout()).then((res) => {
+    dispatch(checkout({
+      discountType,
+      discountValue,
+      isQuotation,
+    })).then((res) => {
       if (!res.error) {
         const savedInvoice = res.payload;
         
@@ -126,6 +135,7 @@ function POS() {
           total: savedInvoice.total,
           paymentMethod: savedInvoice.paymentMethod,
           pdfUrl: savedInvoice.pdfUrl,
+          isQuotation: savedInvoice.isQuotation,
         });
 
         // Trigger products refetch to synchronize stock counters instantly
@@ -133,6 +143,7 @@ function POS() {
         
         // Clear local discount input
         setDiscountValue(0);
+        setIsQuotation(false); // Reset quotation toggle
 
         // Open printing popup modal
         setShowCheckoutModal(true);
@@ -160,10 +171,18 @@ function POS() {
               font-size: 11px; 
               line-height: 1.5;
               background-color: #fff;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             .print-receipt {
               max-width: 480px;
               margin: 0 auto;
+              border: 3px double #94a3b8;
+              border-top: 10px solid #556b2f;
+              border-radius: 8px;
+              padding: 20px;
+              background-color: #fff;
+              box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             }
             .text-center { text-align: center; }
             .text-right { text-align: right; }
@@ -177,46 +196,83 @@ function POS() {
               margin-bottom: 8px;
             }
             .logo-img {
-              max-height: 48px;
+              max-height: 40px;
               width: auto;
               object-fit: contain;
             }
-            .shop-title {
-              font-size: 16px;
-              font-weight: 850;
-              color: #0f172a;
+            .shop-header-banner {
+              background-color: #e2ebc8 !important;
+              color: #0f172a !important;
+              padding: 4px 10px;
+              font-size: 9px;
+              font-weight: 700;
+              display: flex;
+              justify-content: space-between;
+              border-top-left-radius: 6px;
+              border-top-right-radius: 6px;
+            }
+            .shop-title-banner {
+              background-color: #6b8e23 !important;
+              color: #ffffff !important;
+              padding: 10px;
+              text-align: center;
+            }
+            .shop-title-text {
+              font-size: 18px;
+              font-weight: 900;
+              margin: 0;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-              margin: 4px 0;
             }
-            .shop-meta {
+            .shop-subtitle-text {
               font-size: 9.5px;
-              color: #64748b;
-              margin: 2px 0;
+              font-weight: 700;
+              letter-spacing: 2px;
+              margin: 2px 0 0 0;
+            }
+            .shop-address-banner {
+              background-color: #e2ebc8 !important;
+              color: #0f172a !important;
+              padding: 8px 12px;
+              text-align: center;
+              font-size: 8.5px;
+              font-weight: 700;
+              border-bottom-left-radius: 6px;
+              border-bottom-right-radius: 6px;
+            }
+            .shop-tagline {
+              font-size: 7.5px;
+              font-weight: normal;
+              margin-top: 4px;
+              color: #374151 !important;
+            }
+            .document-title-container {
+              padding: 12px 0;
+              text-align: center;
+            }
+            .document-title {
+              font-size: 13px;
+              font-weight: 900;
+              text-transform: uppercase;
+              text-decoration: underline;
+              color: #000 !important;
+              letter-spacing: 1px;
             }
             
-            .divider-dashed { 
-              border-bottom: 1px dashed #cbd5e1; 
-              margin: 12px 0; 
-            }
-            .divider-solid { 
-              border-bottom: 1px solid #e2e8f0; 
-              margin: 12px 0; 
-            }
-            
-            /* Meta Details Box */
+            /* Borders for receipt data */
             .details-box {
-              background-color: #f8fafc;
-              border: 1px solid #f1f5f9;
-              border-radius: 8px;
-              padding: 10px 12px;
-              margin-bottom: 14px;
+              background-color: #fff !important;
+              border: 1px solid #94a3b8 !important;
+              border-radius: 6px;
+              padding: 8px 12px;
+              margin-bottom: 12px;
             }
             .details-row {
               display: flex;
               justify-content: space-between;
               margin: 4px 0;
               font-size: 9.5px;
+              font-weight: 700;
             }
             .details-label {
               color: #64748b;
@@ -233,73 +289,93 @@ function POS() {
               font-family: 'JetBrains Mono', 'Courier New', monospace;
             }
             
-            /* Table Styling */
-            table { 
-              width: 100%; 
-              border-collapse: collapse; 
-              margin: 12px 0;
+            /* Bordered Table Grid */
+            .receipt-table-container {
+              border: 1px solid #94a3b8 !important;
+              border-radius: 6px;
+              overflow: hidden;
             }
-            th { 
-              background-color: #0f172a; 
-              color: #ffffff;
-              font-weight: 700; 
-              font-size: 9px;
-              text-transform: uppercase;
-              letter-spacing: 0.3px;
-              padding: 6px 8px;
-              text-align: left;
-            }
-            td { 
-              padding: 8px; 
-              font-size: 9.5px;
-              border-bottom: 1px solid #f1f5f9;
-              color: #334155;
-            }
-            tr:nth-child(even) td {
-              background-color: #f8fafc;
-            }
-            
-            /* Calculations block */
-            .calc-block {
-              display: flex;
-              flex-direction: column;
-              align-items: flex-end;
-              margin-top: 10px;
-            }
-            .calc-container {
+            .receipt-table {
               width: 100%;
-              max-width: 240px;
+              border-collapse: collapse;
             }
-            .calc-row {
-              display: flex;
-              justify-content: space-between;
-              margin: 3px 0;
+            .receipt-table th {
+              background-color: #0f172a !important;
+              color: #ffffff !important;
+              font-weight: 700;
+              font-size: 8.5px;
+              text-transform: uppercase;
+              padding: 6px 8px;
+              border-bottom: 1px solid #94a3b8 !important;
+              border-right: 1px solid #94a3b8 !important;
+            }
+            .receipt-table th:last-child {
+              border-right: none !important;
+            }
+            .receipt-table td {
+              padding: 6px 8px;
               font-size: 9.5px;
-              color: #475569;
+              border-bottom: 1px solid #e2e8f0 !important;
+              border-right: 1px solid #94a3b8 !important;
+              color: #1e293b !important;
             }
-            .calc-row-total {
-              display: flex;
-              justify-content: space-between;
-              margin-top: 6px;
-              padding-top: 6px;
-              border-top: 1px solid #e2e8f0;
-              font-size: 12px;
-              font-weight: 800;
-              color: #f97316;
+            .receipt-table td:last-child {
+              border-right: none !important;
+            }
+            .receipt-table tr:last-child td {
+              border-bottom: none !important;
             }
             
-            /* Footer Message */
-            .footer-msg {
-              text-align: center;
+            /* Calculations inner table */
+            .inner-calc-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .inner-calc-table td {
+              padding: 4px 8px !important;
+              border: none !important;
+              font-size: 9px !important;
+            }
+            .inner-calc-table tr:not(:last-child) td {
+              border-bottom: 1px solid #e2e8f0 !important;
+            }
+            
+            /* Footer & Signatures */
+            .footer-sig-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-end;
               margin-top: 20px;
-              font-size: 9px;
-              color: #64748b;
+              padding: 0 8px;
             }
             .footer-thankyou {
               font-weight: 700;
-              color: #0f172a;
-              font-size: 10px;
-              margin-bottom: 3px;
+              font-style: italic;
+              font-size: 9.5px;
+              color: #0f172a !important;
+            }
+            .sig-block {
+              text-align: right;
+              width: 140px;
+            }
+            .sig-line {
+              border-bottom: 1px solid #94a3b8 !important;
+              margin-bottom: 4px;
+            }
+            .sig-text {
+              font-size: 8.5px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #475569 !important;
+            }
+
+            .divider-dashed {
+              border-bottom: 1px dashed #cbd5e1;
+              margin: 12px 0;
+            }
+            .divider-solid {
+              border-bottom: 1px solid #e2e8f0;
+              margin: 12px 0;
             }
             
             @page {
@@ -322,10 +398,15 @@ function POS() {
     printWindow.document.close();
   };
 
-  const getPdfDownloadLink = () => {
-    if (!receiptData?.pdfUrl) return "#";
+  const getDynamicPdfUrl = () => {
+    if (!receiptData?._id) return "";
     const serverUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace("/api", "") : "http://localhost:5000";
-    return `${serverUrl}${receiptData.pdfUrl}`;
+    const token = user?.token || "";
+    return `${serverUrl}/api/billing/${receiptData._id}/pdf?pageSize=${pageSize}&orientation=${orientation}&token=${token}&t=${Date.now()}`;
+  };
+
+  const getPdfDownloadLink = () => {
+    return getDynamicPdfUrl();
   };
 
   const profile = user?.profile || {};
@@ -650,6 +731,20 @@ function POS() {
           </div>
         </div>
 
+        {/* Quotation / Estimate Toggle */}
+        <div className="flex items-center gap-2.5 py-1 select-none">
+          <input
+            type="checkbox"
+            id="isQuotation"
+            checked={isQuotation}
+            onChange={(e) => setIsQuotation(e.target.checked)}
+            className="w-4 h-4 rounded text-orange-500 bg-slate-950 border-slate-800 focus:ring-orange-500 focus:ring-2 cursor-pointer"
+          />
+          <label htmlFor="isQuotation" className="text-xs font-semibold text-slate-350 cursor-pointer">
+            Generate as Quotation / Estimate
+          </label>
+        </div>
+
         {/* Checkout Button */}
         <button
           onClick={handleCheckout}
@@ -669,11 +764,11 @@ function POS() {
       {/* PRINTABLE INVOICE / CHECKOUT MODAL OVERLAY */}
       {showCheckoutModal && receiptData && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
             
             <div className="bg-slate-950 px-6 py-4 flex items-center justify-between border-b border-slate-900">
               <h3 className="font-bold text-white flex items-center gap-2">
-                <FaCheckCircle className="text-emerald-500" /> Invoice Generated
+                <FaCheckCircle className="text-emerald-500" /> {receiptData.isQuotation ? "Quotation / Estimate Generated" : "Tax Invoice Generated"}
               </h3>
               <button 
                 onClick={() => {
@@ -686,112 +781,202 @@ function POS() {
               </button>
             </div>
 
-            {/* Receipt details content (Scrollable area) */}
-            <div className="p-6 overflow-y-auto space-y-4 text-xs font-sans text-slate-305 print:p-0" id="invoice-print-area">
-              
-              {/* Receipt Header branding */}
-              <div className="text-center space-y-1">
-                <div className="logo-container flex justify-center mb-2">
-                  <img src={logoSrc} alt="Logo" className="logo-img max-h-12 w-auto object-contain rounded-lg border border-slate-800" />
-                </div>
-                <h2 className="shop-title text-base font-extrabold text-white uppercase tracking-wider">{shopName.toUpperCase()}</h2>
-                <p className="shop-meta text-[10px] text-slate-400">{address}</p>
-                <p className="shop-meta text-[10px] text-slate-400">Phone: {contactPhone}</p>
-                <p className="shop-meta text-[10px] text-slate-400">GSTIN: {gstNumber}</p>
-                <div className="divider-dashed border-b border-dashed border-slate-800 my-3"></div>
-              </div>
+            {/* Split Content */}
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden h-[68vh]">
+              {/* Left Column: PDF Iframe Preview */}
+              <div className="flex-1 bg-slate-950 border-r border-slate-850 flex flex-col h-full min-h-[300px] md:min-h-0">
+                <div className="p-3 bg-slate-950 border-b border-slate-850 flex flex-wrap justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-slate-300">Live Generated PDF Preview</span>
+                  <div className="flex items-center gap-3">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase">Size:</label>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 text-slate-350"
+                    >
+                      <option value="auto">Auto-Fit</option>
+                      <option value="A4">A4 Paper</option>
+                      <option value="A3">A3 Paper</option>
+                    </select>
 
-              {/* Transaction Metadata Card */}
-              <div className="details-box bg-slate-950 border border-slate-850 rounded-xl p-3.5 space-y-2 text-[10px]">
-                <div className="details-row flex justify-between">
-                  <span className="details-label text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Invoice:</span>
-                  <span className="details-val font-mono font-bold text-white">{receiptData.id}</span>
-                </div>
-                <div className="details-row flex justify-between">
-                  <span className="details-label text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Date:</span>
-                  <span className="details-val text-slate-300">{new Date(receiptData.date).toLocaleString()}</span>
-                </div>
-                <div className="details-row flex justify-between">
-                  <span className="details-label text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Customer:</span>
-                  <span className="details-val font-semibold text-slate-305">{receiptData.customerName}</span>
-                </div>
-                <div className="details-row flex justify-between">
-                  <span className="details-label text-slate-500 font-bold uppercase tracking-wider text-[8.5px]">Phone:</span>
-                  <span className="details-val text-slate-305">{receiptData.customerPhone}</span>
-                </div>
-              </div>
-
-              <div className="divider-dashed border-b border-dashed border-slate-800 my-2"></div>
-
-              {/* Items List Table */}
-              <table className="w-full text-left text-[10px] items-table">
-                <thead>
-                  <tr className="border-b border-dashed border-slate-800 font-bold text-white">
-                    <th className="py-2 px-1 text-slate-400 text-left">Description</th>
-                    <th className="py-2 text-center text-slate-400">Qty</th>
-                    <th className="py-2 text-right text-slate-400">Rate</th>
-                    <th className="py-2 text-right text-slate-400">GST</th>
-                    <th className="py-2 text-right text-slate-400">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-900/50">
-                  {receiptData.items.map((item, idx) => {
-                    const lineTotal = item.price * item.qty;
-                    return (
-                      <tr key={idx} className="border-b border-slate-900/40">
-                        <td className="py-2 px-1 max-w-[120px] truncate text-slate-200">{item.name}</td>
-                        <td className="py-2 text-center font-mono text-slate-300">{item.qty}</td>
-                        <td className="py-2 text-right font-mono text-slate-300">₹{item.price.toFixed(2)}</td>
-                        <td className="py-2 text-right font-mono text-slate-300">{item.gstRate || 0}%</td>
-                        <td className="py-2 text-right font-mono font-bold text-white">₹{lineTotal.toFixed(2)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-
-              <div className="divider-dashed border-b border-dashed border-slate-800 my-2"></div>
-
-              {/* Summary Calculations Block */}
-              <div className="calc-block flex flex-col items-end w-full">
-                <div className="calc-container w-full max-w-[240px] space-y-1.5 text-[10px] text-right text-slate-300">
-                  <div className="calc-row flex justify-between">
-                    <span className="text-slate-500">Subtotal:</span>
-                    <span className="font-mono text-slate-200">₹{receiptData.subtotal.toFixed(2)}</span>
+                    <label className="text-[10px] text-slate-500 font-bold uppercase">Layout:</label>
+                    <select
+                      value={orientation}
+                      onChange={(e) => setOrientation(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 text-[10px] rounded px-1.5 py-0.5 text-slate-350"
+                    >
+                      <option value="portrait">Portrait</option>
+                      <option value="landscape">Landscape</option>
+                    </select>
                   </div>
-                  {receiptData.discountAmount > 0 && (
-                    <div className="calc-row flex justify-between text-rose-400 font-semibold">
-                      <span>Discount ({receiptData.discountPercent.toFixed(0)}%):</span>
-                      <span className="font-mono">-₹{receiptData.discountAmount.toFixed(2)}</span>
+                </div>
+                <iframe
+                  src={getDynamicPdfUrl()}
+                  className="w-full h-full flex-1 border-none bg-slate-950"
+                  title="Live Invoice PDF"
+                />
+              </div>
+
+              {/* Right Column: HTML Print Preview */}
+              <div className="w-full md:w-[480px] overflow-y-auto p-4 bg-slate-950 flex flex-col h-full">
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 text-center">
+                  POS Print Receipt Preview
+                </div>
+                <div className="bg-white p-4 rounded-lg overflow-y-auto flex-1 max-h-full" style={{ color: "#1e293b" }}>
+                  <div id="invoice-print-area">
+                    <div className="print-receipt">
+                      {/* GSTIN / MOBILE Light olive green banner */}
+                      <div className="shop-header-banner">
+                        <span>REG.GSTIN: {gstNumber}</span>
+                        <span>MOBILE: {contactPhone}</span>
+                      </div>
+
+                      {/* Logo container if logoSrc exists */}
+                      {logoSrc && (
+                        <div className="logo-container">
+                          <img src={logoSrc} alt="Logo" className="logo-img" />
+                        </div>
+                      )}
+
+                      {/* Olive Green Shop Banner */}
+                      <div className="shop-title-banner">
+                        <h1 className="shop-title-text">{shopName.toUpperCase()}</h1>
+                        <p className="shop-subtitle-text">WHOLE SALER'S</p>
+                      </div>
+
+                      {/* Light Green Address & Tagline Banner */}
+                      <div className="shop-address-banner">
+                        <p className="bold">{address.toUpperCase()}</p>
+                        <p className="shop-tagline">
+                          {profile.businessDescription || "OFFICE STATIONARY, SCHOOL ITEMS, ALL NOTE BOOKS, ZEROX PAPERS, SPORTS ITMES, COMPUTERS MATERIALS AND OTHERS MATERIALS"}
+                        </p>
+                      </div>
+
+                      {/* Document Title */}
+                      <div className="document-title-container">
+                        <span className="document-title">
+                          {receiptData.isQuotation ? "ESTIMATE / QUOTATION" : "CREDIT BILL"}
+                        </span>
+                      </div>
+
+                      {/* Invoice Details Box */}
+                      <div className="details-box">
+                        <div className="details-row">
+                          <span className="details-label">Bill No:</span>
+                          <span className="details-val font-mono">{receiptData.id}</span>
+                        </div>
+                        <div className="details-row">
+                          <span className="details-label">Date:</span>
+                          <span className="details-val">{new Date(receiptData.date).toLocaleDateString("en-IN")}</span>
+                        </div>
+                        <div className="details-row">
+                          <span className="details-label">Customer Name:</span>
+                          <span className="details-val">{receiptData.customerName.toUpperCase()}</span>
+                        </div>
+                        {receiptData.customerPhone && receiptData.customerPhone !== "N/A" && (
+                          <div className="details-row">
+                            <span className="details-label">Mobile No:</span>
+                            <span className="details-val">{receiptData.customerPhone}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bordered Table Grid */}
+                      <div className="receipt-table-container">
+                        <table className="receipt-table">
+                          <thead>
+                            <tr>
+                              <th style={{ width: "8%" }}>S.No</th>
+                              <th style={{ width: "52%" }}>PARTICULARS</th>
+                              <th style={{ width: "10%" }}>QTY</th>
+                              <th style={{ width: "12%" }}>RATE</th>
+                              <th style={{ width: "18%" }}>AMOUNT</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {receiptData.items.map((item, idx) => {
+                              const lineTotal = item.price * item.qty;
+                              return (
+                                <tr key={idx}>
+                                  <td className="text-center">{idx + 1}</td>
+                                  <td className="bold">{item.name.toUpperCase()}</td>
+                                  <td className="text-center font-mono">{item.qty}</td>
+                                  <td className="text-right font-mono">₹{item.price.toFixed(2)}</td>
+                                  <td className="text-right font-mono bold">₹{lineTotal.toFixed(2)}</td>
+                                </tr>
+                              );
+                            })}
+                            
+                            {/* Bank details and Calculations merged row */}
+                            <tr>
+                              <td colSpan="3" style={{ verticalAlign: "top", padding: "8px", borderRight: "1px solid #94a3b8" }}>
+                                <div style={{ color: "#b91c1c", fontWeight: "bold", fontSize: "8.5px", marginBottom: "4px" }}>
+                                  BANK ACCOUNT DETAILS:
+                                </div>
+                                <div style={{ fontSize: "7.5px", color: "#0f172a", lineHeight: "1.3" }}>
+                                  <div>A/c Name: {shopName.toUpperCase()}</div>
+                                  <div>Bank: CANARA BANK, BASAVAKALYAN BRANCH</div>
+                                  <div>A/c No: 120033287950  |  IFSC: CNRB0010700</div>
+                                </div>
+                              </td>
+                              <td colSpan="2" style={{ padding: "0" }}>
+                                <table className="inner-calc-table">
+                                  <tbody>
+                                    <tr>
+                                      <td className="bold" style={{ width: "40%" }}>TOTAL QTY:</td>
+                                      <td className="text-right font-mono bold" style={{ width: "60%" }}>
+                                        {receiptData.items.reduce((sum, item) => sum + item.qty, 0)}
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td className="bold">SUBTOTAL:</td>
+                                      <td className="text-right font-mono">₹{receiptData.subtotal.toFixed(2)}</td>
+                                    </tr>
+                                    {receiptData.discountAmount > 0 && (
+                                      <tr>
+                                        <td className="bold text-rose-500">DISCOUNT:</td>
+                                        <td className="text-right font-mono text-rose-500 font-bold">
+                                          -₹{receiptData.discountAmount.toFixed(2)}
+                                        </td>
+                                      </tr>
+                                    )}
+                                    <tr>
+                                      <td className="bold">CGST ({(receiptData.items[0]?.gstRate || 0) / 2}%):</td>
+                                      <td className="text-right font-mono">₹{(receiptData.gstAmount / 2).toFixed(2)}</td>
+                                    </tr>
+                                    <tr>
+                                      <td className="bold">SGST ({(receiptData.items[0]?.gstRate || 0) / 2}%):</td>
+                                      <td className="text-right font-mono">₹{(receiptData.gstAmount / 2).toFixed(2)}</td>
+                                    </tr>
+                                    <tr style={{ borderTop: "1px solid #94a3b8" }}>
+                                      <td className="bold font-extrabold text-orange-600" style={{ fontSize: "10px" }}>
+                                        {receiptData.isQuotation ? "ESTIMATED TOTAL" : "GRAND TOTAL"}
+                                      </td>
+                                      <td className="text-right font-mono font-black text-orange-600" style={{ fontSize: "11px" }}>
+                                        ₹{receiptData.total.toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Footer & Signature block */}
+                      <div className="footer-sig-container">
+                        <div className="footer-thankyou">Thanku visit again</div>
+                        <div className="sig-block">
+                          <div className="sig-line"></div>
+                          <div className="sig-text">Authorized signature</div>
+                        </div>
+                      </div>
+
                     </div>
-                  )}
-                  <div className="calc-row flex justify-between">
-                    <span className="text-slate-500">CGST (Central Tax):</span>
-                    <span className="font-mono text-slate-200">₹{(receiptData.gstAmount / 2).toFixed(2)}</span>
-                  </div>
-                  <div className="calc-row flex justify-between">
-                    <span className="text-slate-500">SGST (State Tax):</span>
-                    <span className="font-mono text-slate-200">₹{(receiptData.gstAmount / 2).toFixed(2)}</span>
-                  </div>
-                  <div className="divider-solid border-b border-slate-850 my-1.5"></div>
-                  <div className="calc-row-total flex justify-between text-xs font-black text-orange-400 py-1">
-                    <span>Grand Total:</span>
-                    <span className="font-mono text-base font-extrabold text-orange-400">₹{receiptData.total.toFixed(2)}</span>
-                  </div>
-                  <div className="calc-row flex justify-between text-emerald-400 font-bold border-t border-slate-900 pt-1.5">
-                    <span>Paid Via ({receiptData.paymentMethod}):</span>
-                    <span className="font-mono">₹{receiptData.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
-
-              {/* Receipt Footer */}
-              <div className="footer-msg text-center space-y-1 pt-4 text-slate-500 text-[10px]">
-                <div className="divider-dashed border-b border-dashed border-slate-800 my-2"></div>
-                <p className="footer-thankyou font-bold text-slate-300">THANK YOU FOR YOUR VISIT!</p>
-                <p className="text-[9px] text-slate-550">Goods once sold will not be taken back without receipt verification.</p>
-              </div>
-
             </div>
 
             {/* Bottom Actions footer */}
